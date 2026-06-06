@@ -238,15 +238,16 @@ export default function Home() {
                 <button
                   key={tab.key}
                   onClick={() => handleTabClick(tab.key)}
-                className={`rounded-2xl px-4 py-2 text-sm font-semibold transition ${
-                  activeTab === tab.key
-                    ? 'bg-blue-500 text-slate-950 shadow-xl shadow-blue-500/30'
-                    : 'bg-slate-900 text-slate-300 hover:bg-slate-800'
-                }`}
+                  className={`rounded-2xl px-4 py-2 text-sm font-semibold transition ${
+                    activeTab === tab.key
+                      ? 'bg-blue-500 text-slate-950 shadow-xl shadow-blue-500/30'
+                      : 'bg-slate-900 text-slate-300 hover:bg-slate-800'
+                  }`}
               >
                 {tab.label}
               </button>
-            ))}
+            );
+            })}
           </div>
         </section>
 
