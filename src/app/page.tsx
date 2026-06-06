@@ -11,9 +11,27 @@ import { hydraConfig, getEnabledHydraModuleKeys, tokenAName, tokenASymbol, token
 import { getModuleLabelByKey, getModuleIconByKey } from '@/lib/moduleMetadata';
 import AdaptiveLayout from '../components/AdaptiveLayout';
 
+type TabItem = {
+  key: string;
+  label: string;
+  requiresConnection?: boolean;
+};
+
+const TAB_MAP: Record<string, TabItem> = {
+  swap: { key: 'swap', label: '🔄 Swap', requiresConnection: true },
+  liquidity: { key: 'liquidity', label: '💧 Liquidity', requiresConnection: true },
+  faucet: { key: 'faucet', label: '🚰 Faucet', requiresConnection: false },
+  analytics: { key: 'analytics', label: '📊 Analytics', requiresConnection: false },
+  governance: { key: 'governance', label: '🏛 Governance', requiresConnection: false },
+  rewards: { key: 'staking', label: '🏆 Rewards', requiresConnection: true },
+  leaderboard: { key: 'leaderboard', label: '🥇 Leaderboard', requiresConnection: false },
+};
+
 export default function Home() {
+  const theme = useTheme();
+  const firstTab = TAB_MAP[theme.dashboardOrder[0]]?.key ?? 'swap';
   const [activeNetwork, setActiveNetwork] = useState(defaultNetwork);
-  const [activeTab, setActiveTab] = useState('swap');
+  const [activeTab, setActiveTab] = useState(firstTab);
   const [showConnectionPrompt, setShowConnectionPrompt] = useState(false);
   const { switchChain } = useSwitchChain();
   const { address: userAddress, isConnected } = useAccount();
@@ -25,7 +43,6 @@ export default function Home() {
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const deployerAddress = process.env.NEXT_PUBLIC_DEPLOYER_ADDRESS?.toLowerCase() || '';
   const isDeployer = isConnected && userAddress?.toLowerCase() === deployerAddress;
-  const theme = useTheme();
 
   const logoFontFamily = useMemo(() => {
     const fontMap: Record<string, string> = {
@@ -90,11 +107,6 @@ export default function Home() {
   const extraTokens = hydraConfig.tokens?.slice(2) ?? [];
 
   const enabledModuleKeys = getEnabledHydraModuleKeys();
-  type TabItem = {
-    key: string;
-    label: string;
-    requiresConnection?: boolean;
-  };
 
   const moduleTabs: TabItem[] = useMemo(
     () => enabledModuleKeys.map((key) => ({ key, label: `${getModuleIconByKey(key)} ${getModuleLabelByKey(key)}` })),
@@ -102,13 +114,18 @@ export default function Home() {
   );
 
   const basicTabs: TabItem[] = useMemo(
-    () => [
-      { key: 'swap', label: '🔄 Swap', requiresConnection: true },
-      { key: 'liquidity', label: '💧 Liquidity', requiresConnection: true },
-      { key: 'faucet', label: '🚰 Faucet', requiresConnection: false },
-      { key: 'analytics', label: '📊 Analytics', requiresConnection: false }
-    ],
-    []
+    () => {
+      const ordered = theme.dashboardOrder
+        .map((widget) => TAB_MAP[widget])
+        .filter((tab): tab is TabItem => !!tab);
+
+      if (!ordered.find((tab) => tab.key === 'faucet')) {
+        ordered.push(TAB_MAP['faucet']);
+      }
+
+      return ordered;
+    },
+    [theme.dashboardOrder]
   );
 
   const allTabs = useMemo<TabItem[]>(() => {
