@@ -3,7 +3,7 @@
 import { useMemo, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { ethers } from 'ethers';
-import themeConfig from '../theme.config.json';
+import { useTheme } from '../hooks/useTheme';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { useSwitchChain, useAccount } from 'wagmi';
 import { deployments, defaultNetwork } from '../lib/deployments';
@@ -25,6 +25,7 @@ export default function Home() {
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const deployerAddress = process.env.NEXT_PUBLIC_DEPLOYER_ADDRESS?.toLowerCase() || '';
   const isDeployer = isConnected && userAddress?.toLowerCase() === deployerAddress;
+  const theme = useTheme();
 
   const logoFontFamily = useMemo(() => {
     const fontMap: Record<string, string> = {
@@ -35,9 +36,9 @@ export default function Home() {
       modern: "'Space Grotesk', sans-serif",
     };
 
-    const personality = (themeConfig as { dnaPersonality?: string }).dnaPersonality?.toString().toLowerCase();
+    const personality = theme.dnaPersonality?.toString().toLowerCase();
     return fontMap[personality ?? 'neo'] || fontMap.neo;
-  }, []);
+  }, [theme.dnaPersonality]);
 
   useEffect(() => {
     let active = true;
@@ -118,6 +119,31 @@ export default function Home() {
       return true;
     });
   }, [basicTabs, moduleTabs]);
+
+  const orderedTabKeys = useMemo(() => {
+    const TAB_MAP: Record<string, string> = {
+      governance: 'governance',
+      rewards: 'staking',
+      leaderboard: 'leaderboard',
+      swap: 'swap',
+      liquidity: 'liquidity',
+      analytics: 'analytics',
+    };
+
+    const enabledTabKeys = new Set(allTabs.map((tab) => tab.key));
+
+    const ordered = theme.dashboardOrder
+      .map((widget) => TAB_MAP[widget])
+      .filter((tabKey): tabKey is string => Boolean(tabKey))
+      .filter((tabKey) => enabledTabKeys.has(tabKey));
+
+    if (enabledTabKeys.has('faucet')) {
+      ordered.push('faucet');
+    }
+
+    const remaining = allTabs.map((tab) => tab.key).filter((tabKey) => !ordered.includes(tabKey));
+    return [...ordered, ...remaining];
+  }, [allTabs, theme.dashboardOrder]);
 
   const handleNetworkChange = (value: string) => {
     setActiveNetwork(value);
@@ -205,10 +231,13 @@ export default function Home() {
 
         <section className="mt-8 rounded-[2rem] border border-slate-800 bg-slate-950/80 p-4 shadow-lg shadow-slate-950/20">
           <div className="flex flex-wrap gap-2">
-            {allTabs.map((tab) => (
-              <button
-                key={tab.key}
-                onClick={() => handleTabClick(tab.key)}
+            {orderedTabKeys.map((tabKey) => {
+              const tab = allTabs.find((item) => item.key === tabKey);
+              if (!tab) return null;
+              return (
+                <button
+                  key={tab.key}
+                  onClick={() => handleTabClick(tab.key)}
                 className={`rounded-2xl px-4 py-2 text-sm font-semibold transition ${
                   activeTab === tab.key
                     ? 'bg-blue-500 text-slate-950 shadow-xl shadow-blue-500/30'
