@@ -10,6 +10,7 @@ import { deployments, defaultNetwork } from '../lib/deployments';
 import { hydraConfig, getEnabledHydraModuleKeys, tokenAName, tokenASymbol, tokenBName, tokenBSymbol } from '../lib/dexConfig';
 import { getModuleLabelByKey, getModuleIconByKey } from '@/lib/moduleMetadata';
 import AdaptiveLayout from '../components/AdaptiveLayout';
+import themeConfig from '../theme.config.json';
 
 type TabItem = {
   key: string;
@@ -28,11 +29,18 @@ const TAB_MAP: Record<string, TabItem> = {
   leaderboard: { key: 'leaderboard', label: '🥇 Leaderboard', requiresConnection: false },
 };
 
+function getFirstTab(): string {
+  for (const widget of themeConfig.dashboardOrder) {
+    const tab = TAB_MAP[widget];
+    if (tab) return tab.key;
+  }
+  return 'swap';
+}
+
 export default function Home() {
   const theme = useTheme();
-  const firstTab = TAB_MAP[theme.dashboardOrder[0]]?.key ?? 'swap';
   const [activeNetwork, setActiveNetwork] = useState(defaultNetwork);
-  const [activeTab, setActiveTab] = useState(firstTab);
+  const [activeTab, setActiveTab] = useState(() => getFirstTab());
   const [showConnectionPrompt, setShowConnectionPrompt] = useState(false);
   const { switchChain } = useSwitchChain();
   const { address: userAddress, isConnected } = useAccount();
