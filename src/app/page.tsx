@@ -117,7 +117,7 @@ export default function Home() {
   const basicTabs = useMemo(
     () => {
       const seen = new Set<string>();
-      const ordered: { key: string; label: string; requiresConnection: boolean }[] = [];
+      const ordered: TabItem[] = [];
       for (const widget of theme.dashboardOrder) {
         const tab = TAB_MAP[widget];
         if (tab && !seen.has(tab.key)) {
