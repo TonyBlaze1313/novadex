@@ -19,6 +19,7 @@ type TabItem = {
 
 const TAB_MAP: Record<string, TabItem> = {
   swap: { key: 'swap', label: '🔄 Swap', requiresConnection: true },
+  'price-chart': { key: 'swap', label: '🔄 Swap', requiresConnection: true },
   liquidity: { key: 'liquidity', label: '💧 Liquidity', requiresConnection: true },
   faucet: { key: 'faucet', label: '🚰 Faucet', requiresConnection: false },
   analytics: { key: 'analytics', label: '📊 Analytics', requiresConnection: false },
@@ -113,16 +114,20 @@ export default function Home() {
     [enabledModuleKeys]
   );
 
-  const basicTabs: TabItem[] = useMemo(
+  const basicTabs = useMemo(
     () => {
-      const ordered = theme.dashboardOrder
-        .map((widget) => TAB_MAP[widget])
-        .filter((tab): tab is TabItem => !!tab);
-
-      if (!ordered.find((tab) => tab.key === 'faucet')) {
+      const seen = new Set<string>();
+      const ordered: { key: string; label: string; requiresConnection: boolean }[] = [];
+      for (const widget of theme.dashboardOrder) {
+        const tab = TAB_MAP[widget];
+        if (tab && !seen.has(tab.key)) {
+          seen.add(tab.key);
+          ordered.push(tab);
+        }
+      }
+      if (!seen.has('faucet')) {
         ordered.push(TAB_MAP['faucet']);
       }
-
       return ordered;
     },
     [theme.dashboardOrder]
