@@ -113,7 +113,7 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
     return res.status(200).json(stableHealthResponse());
   }
 
-  const deploymentId = process.env.DEPLOYMENT_ID;
+  const deploymentId = process.env.HYDRA_DEPLOYMENT_ID;
   if (!deploymentId) {
     return res.status(200).json(stableHealthResponse());
   }
